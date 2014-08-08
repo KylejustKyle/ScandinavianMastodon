@@ -24,7 +24,7 @@ public class Game extends StateBasedGame {
 	
 	public static void main(String[] args) {
 		AppGameContainer appGameContainer;
-
+//Test
 		try {
 			appGameContainer = new AppGameContainer(new Game(gameName));
 			appGameContainer.setDisplayMode(640, 480, false);
