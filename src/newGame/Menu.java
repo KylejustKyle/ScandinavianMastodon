@@ -18,7 +18,7 @@ public class Menu extends BasicGameState {
 		playGame = new Image("res/playNow.png");
 		exitGame = new Image("res/exitGame.png");		
 	}
-	
+	//test
 	public void render(GameContainer gc, StateBasedGame sbg, Graphics g) throws SlickException {
 		g.drawString("Welcome to an Awesome Game!", 100, 50);
 		playGame.draw(100,100);
