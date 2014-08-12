@@ -34,11 +34,11 @@ public class Play extends BasicGameState{
       movingDown = new Animation(walkDown, duration, false);
       movingLeft = new Animation(walkLeft, duration, false);
       movingRight = new Animation(walkRight, duration, false);
-      charSprite = movingRight; //by default as soon as game loads, bucky will be facing down
+      charSprite = movingRight;
    
-      charMapPosX = 50;
+      charMapPosX = 40;
       charScreenPosX = charMapPosX;
-      charMapPosY = 50;
+      charMapPosY = 40;
       charScreenPosY = charMapPosY; 
       
       inJump = 0;
