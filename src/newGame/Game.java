@@ -8,7 +8,7 @@ public class Game extends StateBasedGame {
 	
 	public static final String gameName = "Awesome Game";
 	public static final int menu = 0;
-	public static final int play = 2;
+	public static final int play = 100;
 	
 	public Game(String gameName) {
 		super(gameName);
