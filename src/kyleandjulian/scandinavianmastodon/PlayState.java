@@ -46,9 +46,14 @@ public class PlayState extends BasicGameState{
 		}		
 		
 		map.render((int)mapCurrentX, (int)mapCurrentY);
-		g.drawImage(minimap, minimapFrameX, minimapFrameY, minimapFrameX + minimapFrameWidth, minimapFrameY + minimapFrameHeight, 0, 0, minimap.getWidth(), minimap.getHeight());
-		g.drawImage(menubar, minimapFrameX, minimapFrameY + minimapFrameHeight, minimapFrameX + minimapFrameWidth, gc.getHeight(), 0, 0, menubar.getWidth(), menubar.getHeight());
-		g.drawRect(getMinimapFocusRectX(), getMinimapFocusRectY(), minimapFocusRectWidth, minimapFocusRectHeight);
+		
+		float scaleX = (float)minimapFrameWidth/(map.getWidth() * 32);
+		float scaleY = (float)minimapFrameHeight/(map.getHeight() * 32);
+		g.scale(scaleX, scaleY);
+		map.render((int)((1/scaleX)*minimapFrameX), (int)(1/scaleY) * minimapFrameY);
+		g.resetTransform();
+		g.drawImage(menubar, minimapFrameX, minimapFrameY + minimapFrameHeight, minimapFrameX + minimapFrameWidth, gc.getHeight(), 0, 0, menubar.getWidth(), menubar.getHeight());	
+		g.drawRect(getMinimapFocusRectX(), getMinimapFocusRectY(), minimapFocusRectWidth, minimapFocusRectHeight);	
 	}
    
 	public void update(GameContainer gc, StateBasedGame sbg, int delta) throws SlickException {	
