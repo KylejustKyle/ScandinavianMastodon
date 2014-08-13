@@ -88,6 +88,7 @@ public class PlayState extends BasicGameState{
 	}
 	
 	public void mousePressed(int button, int x, int y) {
+		// click on minimap, shift viewport
 		if (button == 0 && x >= minimapFrameX && x <= minimapFrameX + minimapFrameWidth && y >= minimapFrameY && y <= minimapFrameY + minimapFrameHeight) {
 			float tempX = x - minimapFrameX - minimapFocusRectWidth/2;
 			mapCurrentX = -(tempX * ((float)(map.getWidth() * 32))/minimapFrameWidth);
@@ -95,6 +96,13 @@ public class PlayState extends BasicGameState{
 			float tempY = y - minimapFrameY - minimapFocusRectHeight/2;  // realign y and calculate mapCurrentY
 			mapCurrentY = -(tempY * ((float)(map.getHeight() * 32))/minimapFrameHeight);
 		}	
+		
+		//click on main map, change tile
+		if (button== 0 && x >= 0 && x <= minimapFrameX) {
+			int newTileX = (int)(-(mapCurrentX) + x)/32;
+			int newTileY = (int)(-(mapCurrentY) + y)/32;
+			map.setTileId(newTileX, newTileY, 0, 79);
+		}
 	}	
 	
 	private float getMinimapFocusRectX() {
