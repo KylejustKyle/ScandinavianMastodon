@@ -33,6 +33,18 @@ public class PlayState extends BasicGameState{
 	}
    
 	public void render(GameContainer gc, StateBasedGame sbg, Graphics g) throws SlickException {
+		if (mapCurrentX < -((map.getWidth() * 32) - (gc.getWidth() - minimapFrameX))) {
+			mapCurrentX = -((map.getWidth() * 32) - (gc.getWidth() - minimapFrameX));
+		} else if (mapCurrentX > 0) {
+			mapCurrentX = 0;
+		}
+		
+		if (mapCurrentY < -((map.getHeight() * 32) - gc.getHeight())) {
+			mapCurrentY = -((map.getHeight() * 32) - gc.getHeight());
+		} else if (mapCurrentY > 0) {
+			mapCurrentY = 0;
+		}		
+		
 		map.render((int)mapCurrentX, (int)mapCurrentY);
 		g.drawImage(minimap, minimapFrameX, minimapFrameY, minimapFrameX + minimapFrameWidth, minimapFrameY + minimapFrameHeight, 0, 0, minimap.getWidth(), minimap.getHeight());
 		g.drawImage(menubar, minimapFrameX, minimapFrameY + minimapFrameHeight, minimapFrameX + minimapFrameWidth, gc.getHeight(), 0, 0, menubar.getWidth(), menubar.getHeight());
@@ -74,6 +86,16 @@ public class PlayState extends BasicGameState{
 			}
 		}		
 	}
+	
+	public void mousePressed(int button, int x, int y) {
+		if (button == 0 && x >= minimapFrameX && x <= minimapFrameX + minimapFrameWidth && y >= minimapFrameY && y <= minimapFrameY + minimapFrameHeight) {
+			float tempX = x - minimapFrameX - minimapFocusRectWidth/2;
+			mapCurrentX = -(tempX * ((float)(map.getWidth() * 32))/minimapFrameWidth);
+			
+			float tempY = y - minimapFrameY - minimapFocusRectHeight/2;  // realign y and calculate mapCurrentY
+			mapCurrentY = -(tempY * ((float)(map.getHeight() * 32))/minimapFrameHeight);
+		}	
+	}	
 	
 	private float getMinimapFocusRectX() {
 		float xLoc;

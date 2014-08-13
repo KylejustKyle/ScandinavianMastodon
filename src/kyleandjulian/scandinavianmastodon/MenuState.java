@@ -62,7 +62,7 @@ public class MenuState extends BasicGameState {
 	}
 	
 	public void mousePressed(int button, int x, int y) {
-		if (button == 0 && x >= 342 && x <= 457 && y >=400 && y <= 455) {
+		if (button == 0 && x >= 342 && x <= 457 && y >= 400 && y <= 455) {
 			playGameClicked = true;
 		}
 		
