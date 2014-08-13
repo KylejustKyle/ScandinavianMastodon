@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="75" height="60" tilewidth="32" tileheight="32">
+ <tileset firstgid="1" name="tileset_temp" tilewidth="32" tileheight="32">
+  <image source="tileset_temp.png" width="672" height="288"/>
+ </tileset>
+ <tileset firstgid="190" name="tileset_temp" tilewidth="32" tileheight="32">
+  <image source="tileset_temp.png" width="672" height="288"/>
+ </tileset>
+ <layer name="Tile Layer 1" width="75" height="60">
+  <data encoding="base64" compression="gzip">
+   H4sIAAAAAAAAC+3YQU7CQBiG4YqKngAF9ARKAl6ip5EroBvgANaNegDFhXpCPhObGFOSP60lXyfv4km7/PsmnZlMnmVZDrSkLycVTg1mczOW2x/zX89Lg9nqWMhdA/eBVt99LhJo9SBFA4/BVuWzoFWlqcwq3Bh8t1ur0vuO967ZR6tU0CruVd4a2Bh8AwAgbUtZydpgFndP8iwvBrO4+5BP+TKYBT5Yb+JYb+JYbwAAAAAA8MDdTxx3P3Hc/QCAF/b7OPb7OPZ7pOxAejUcGsy+bwM5q+HcYHZa+frb6kiOaRVqNZQRrUKt/uMfTPWc3UarVM/ZbbRK9ZzNPkgrWtGqK2gVdyXXNUwMZu+iLVEB7btQRgAA
+  </data>
+ </layer>
+ <layer name="Tile Layer 2" width="75" height="60">
+  <data encoding="base64" compression="gzip">
+   H4sIAAAAAAAAC+3ONxECABBFQUwRNBA0EDQQNBA0EDQQ9PF7Kqq7Ynfm9W8wAAAAAAAAAAAAAAAAAAAA/jFMozROk+KX7qZpluZpUfzS3TKt0jptalfa26Zd2qdD8Ut3x3RK53Qpfunumm7pnh61K+090yu906f4Bfj1BRiTtuRQRgAA
+  </data>
+ </layer>
+</map>
