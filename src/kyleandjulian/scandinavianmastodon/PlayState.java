@@ -5,65 +5,86 @@ import org.newdawn.slick.state.*;
 import org.newdawn.slick.tiled.TiledMap;
 
 public class PlayState extends BasicGameState{
-	private Image minimap, menubar;
-	private TiledMap map;
+	private Image blackBlock;	
+	private Image menubar;
+	private TiledMapExtended map;
 	private float mapCurrentX;  // current top left corner of viewable part of tiledmap
 	private float mapCurrentY;
-	private float minimapFocusRectX;
-	private float minimapFocusRectY;
 	private float minimapFocusRectWidth;
 	private float minimapFocusRectHeight;
-	private final int minimapFrameX = 700;  // minimap frame dimensions
-	private final int minimapFrameY = 0;
-	private final int minimapFrameWidth = 100;
-	private final int minimapFrameHeight = 80;
+	private float minimapScaleX;
+	private float minimapScaleY;
+	private float minimapFrameX;
+	private float minimapFrameY;
+	private int viewportWidth;
+	private int viewportHeight;
+	private int zoomState;
+	private float zoomScale;
 	
 	
 	public PlayState(int state){
 	}
 	
-	public void init(GameContainer gc, StateBasedGame sbg) throws SlickException{
-		minimap = new Image("res/tiledmap_temp.png");
+	public void init(GameContainer gc, StateBasedGame sbg) throws SlickException {
+		blackBlock = new Image("res/black_block.png");		
 		menubar = new Image("res/menubar.png");
-		map = new TiledMap("res/tiledmap_temp.tmx");
-		mapCurrentX = -1000;
-		mapCurrentY = -500;
-		minimapFocusRectWidth = minimapFrameWidth * ((((float)gc.getWidth() - minimapFrameWidth))/(map.getWidth() * 32));
-		minimapFocusRectHeight = minimapFrameHeight * (((float)gc.getHeight())/(map.getHeight() * 32));
+		map = new TiledMapExtended("res/tiledmap_temp.tmx");
+		
+		// initialize viewport at center of map
+		mapCurrentX = map.initializeViewportX(gc.getWidth(), GlobalConfig.PLAYSTATE_BORDER * 3 + GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH);
+		mapCurrentY = map.initializeViewportY(gc.getHeight(), GlobalConfig.PLAYSTATE_BORDER * 2);
+		
+		// calculate minimap focus rectangle dimensions
+		minimapFocusRectWidth = map.getMinimapFocusRectWidth(gc.getWidth(), GlobalConfig.PLAYSTATE_BORDER * 3 + GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH, GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH);
+		minimapFocusRectHeight = map.getMinimapFocusRectHeight(gc.getHeight(), GlobalConfig.PLAYSTATE_BORDER * 2, GlobalConfig.PLAYSTATE_MINIMAP_HEIGHT);
+	
+		// calculate minimap scale
+		minimapScaleX = map.getMinimapScaleX();
+		minimapScaleY = map.getMinimapScaleY();
+		
+		// calculate minimap coords
+		minimapFrameX = gc.getWidth() - GlobalConfig.PLAYSTATE_BORDER - GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH;
+		minimapFrameY = GlobalConfig.PLAYSTATE_BORDER;
+		
+		// calculate viewport size
+		viewportWidth = gc.getWidth() - GlobalConfig.PLAYSTATE_BORDER * 3 - GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH;
+		viewportHeight = gc.getHeight() - GlobalConfig.PLAYSTATE_BORDER * 2;
+		
+		// set zoom state
+		zoomState = 0;
+		zoomScale = 1;
 	}
    
 	public void render(GameContainer gc, StateBasedGame sbg, Graphics g) throws SlickException {
-		if (mapCurrentX < -((map.getWidth() * 32) - (gc.getWidth() - minimapFrameX))) {
-			mapCurrentX = -((map.getWidth() * 32) - (gc.getWidth() - minimapFrameX));
-		} else if (mapCurrentX > 0) {
-			mapCurrentX = 0;
-		}
-		
-		if (mapCurrentY < -((map.getHeight() * 32) - gc.getHeight())) {
-			mapCurrentY = -((map.getHeight() * 32) - gc.getHeight());
-		} else if (mapCurrentY > 0) {
-			mapCurrentY = 0;
-		}		
-		
+		// draw main map
+		g.scale(zoomScale, zoomScale);
 		map.render((int)mapCurrentX, (int)mapCurrentY);
-		
-		float scaleX = (float)minimapFrameWidth/(map.getWidth() * 32);
-		float scaleY = (float)minimapFrameHeight/(map.getHeight() * 32);
-		g.scale(scaleX, scaleY);
-		map.render((int)((1/scaleX)*minimapFrameX), (int)(1/scaleY) * minimapFrameY);
 		g.resetTransform();
-		g.drawImage(menubar, minimapFrameX, minimapFrameY + minimapFrameHeight, minimapFrameX + minimapFrameWidth, gc.getHeight(), 0, 0, menubar.getWidth(), menubar.getHeight());	
-		g.drawRect(getMinimapFocusRectX(), getMinimapFocusRectY(), minimapFocusRectWidth, minimapFocusRectHeight);	
+		
+		// draw borders
+		blackBlock.draw(0, 0, GlobalConfig.PLAYSTATE_BORDER, gc.getHeight());
+		blackBlock.draw(0, 0, gc.getWidth(), GlobalConfig.PLAYSTATE_BORDER);
+		blackBlock.draw(0, gc.getHeight() - GlobalConfig.PLAYSTATE_BORDER, gc.getWidth(), GlobalConfig.PLAYSTATE_BORDER);
+		blackBlock.draw(gc.getWidth() - GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH - (GlobalConfig.PLAYSTATE_BORDER * 2), 0, GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH + (GlobalConfig.PLAYSTATE_BORDER * 2), gc.getHeight());
+		
+		// draw minimap
+		g.scale(minimapScaleX, minimapScaleY);
+		map.render((int)((1/minimapScaleX) * minimapFrameX), (int)((1/minimapScaleY) * minimapFrameY));
+		g.resetTransform();
+		g.drawRect(map.getMinimapFocusRectX(gc.getWidth(), mapCurrentX), map.getMinimapFocusRectY(gc.getHeight(), mapCurrentY), minimapFocusRectWidth, minimapFocusRectHeight);	
+	
+		// draw menu pane
+		menubar.draw(gc.getWidth() - GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH - GlobalConfig.PLAYSTATE_BORDER, GlobalConfig.PLAYSTATE_BORDER * 2 + GlobalConfig.PLAYSTATE_MINIMAP_HEIGHT, GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH, GlobalConfig.PLAYSTATE_MENU_HEIGHT);
 	}
    
 	public void update(GameContainer gc, StateBasedGame sbg, int delta) throws SlickException {	
 		Input input = gc.getInput();
 		
 		if (input.isKeyDown(Input.KEY_RIGHT)) {
-			if (mapCurrentX - (gc.getWidth() - minimapFrameWidth) > -(map.getWidth() * 32)) {
+			if (mapCurrentX - viewportWidth > -(map.getPixelWidth())) {
 				mapCurrentX = mapCurrentX - delta * 0.4f;
 			} else {
-				mapCurrentX = -(map.getWidth() * 32) + (gc.getWidth() - minimapFrameWidth);
+				mapCurrentX = -(map.getPixelWidth()) + viewportWidth;
 			}
 		}
 		
@@ -76,10 +97,10 @@ public class PlayState extends BasicGameState{
 		}
 		
 		if (input.isKeyDown(Input.KEY_DOWN)) {
-			if (mapCurrentY - gc.getHeight() > -(map.getHeight() * 32)) {
+			if (mapCurrentY - viewportHeight > -(map.getPixelHeight())) {
 				mapCurrentY = mapCurrentY - delta * 0.4f;
 			} else {
-				mapCurrentY = -(map.getHeight() * 32) + gc.getHeight();
+				mapCurrentY = -(map.getPixelHeight()) + viewportHeight;
 			}
 		}	
 		
@@ -94,39 +115,51 @@ public class PlayState extends BasicGameState{
 	
 	public void mousePressed(int button, int x, int y) {
 		// click on minimap, shift viewport
-		if (button == 0 && x >= minimapFrameX && x <= minimapFrameX + minimapFrameWidth && y >= minimapFrameY && y <= minimapFrameY + minimapFrameHeight) {
+		if (button == 0 && x >= minimapFrameX && x <= minimapFrameX + GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH && y >= minimapFrameY && y <= minimapFrameY + GlobalConfig.PLAYSTATE_MINIMAP_HEIGHT) {
 			float tempX = x - minimapFrameX - minimapFocusRectWidth/2;
-			mapCurrentX = -(tempX * ((float)(map.getWidth() * 32))/minimapFrameWidth);
+			mapCurrentX = -(tempX * ((float)map.getPixelWidth())/GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH);
 			
 			float tempY = y - minimapFrameY - minimapFocusRectHeight/2;  // realign y and calculate mapCurrentY
-			mapCurrentY = -(tempY * ((float)(map.getHeight() * 32))/minimapFrameHeight);
+			mapCurrentY = -(tempY * ((float)map.getPixelHeight())/GlobalConfig.PLAYSTATE_MINIMAP_HEIGHT);
+			
+			// make sure the new focus view is in x boundaries
+			if (mapCurrentX > 0 ) {
+				mapCurrentX = 0;
+			} else if (mapCurrentX < -(map.getPixelWidth() - viewportWidth)) {
+				mapCurrentX = -(map.getPixelWidth() - viewportWidth);
+			}
+			
+			// make sure the new focus view is in y boundaries			
+			if (mapCurrentY > 0 ) {
+				mapCurrentY = 0;
+			} else if (mapCurrentY < -(map.getPixelHeight() - viewportHeight)) {
+				mapCurrentY = -(map.getPixelHeight() - viewportHeight);
+			}			
 		}	
 		
 		//click on main map, change tile
-		if (button== 0 && x >= 0 && x <= minimapFrameX) {
-			int newTileX = (int)(-(mapCurrentX) + x)/32;
-			int newTileY = (int)(-(mapCurrentY) + y)/32;
+		if (button== 0 && x > GlobalConfig.PLAYSTATE_BORDER && x <= GlobalConfig.PLAYSTATE_BORDER + viewportWidth && y > GlobalConfig.PLAYSTATE_BORDER && y <= GlobalConfig.PLAYSTATE_BORDER + viewportHeight) {
+			int newTileX = (int)(-(mapCurrentX) + x)/map.getTileWidth();
+			int newTileY = (int)(-(mapCurrentY) + y)/map.getTileHeight();
 			map.setTileId(newTileX, newTileY, 0, 79);
 		}
 	}	
 	
-	private float getMinimapFocusRectX() {
-		float xLoc;
-		
-		xLoc = minimapFrameWidth * -(mapCurrentX)/(map.getWidth() * 32);
-		
-		return xLoc + minimapFrameX;
-	}
-	
-	private float getMinimapFocusRectY() {
-		float yLoc;
-		
-		yLoc = minimapFrameHeight * -(mapCurrentY)/(map.getHeight() * 32);
-		
-		return yLoc;
+	public void mouseWheelMoved(int change) {
+		if (change < 0) {
+			if ( zoomState > -GlobalConfig.PLAYSTATE_MOUSE_ZOOMLIMIT) {
+				zoomState--;
+				zoomScale = zoomScale - GlobalConfig.PLAYSTATE_ZOOMSTEP;
+			}
+		} else if (change > 0) {
+			if ( zoomState < GlobalConfig.PLAYSTATE_MOUSE_ZOOMLIMIT) {
+				zoomState++;
+				zoomScale = zoomScale + GlobalConfig.PLAYSTATE_ZOOMSTEP;				
+			}			
+		}
 	}
 	
 	public int getID(){
-		return 1;
+		return GlobalConfig.PLAY_STATE;
 	}
 }
