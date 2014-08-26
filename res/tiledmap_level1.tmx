@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="75" height="60" tilewidth="32" tileheight="32">
+ <tileset firstgid="1" name="tileset_temp" tilewidth="32" tileheight="32">
+  <image source="tileset_temp.png" width="672" height="288"/>
+ </tileset>
+ <tileset firstgid="190" name="tileset_temp" tilewidth="32" tileheight="32">
+  <image source="tileset_temp.png" width="672" height="288"/>
+ </tileset>
+ <layer name="Tile Layer 1" width="75" height="60" visible="0">
+  <data encoding="base64" compression="gzip">
+   H4sIAAAAAAAAC+3YT0rDQBiG8fjfE1Rt7Qm0oF5BIVfQQ9QrtN1YD2DcaA9gdaGe0Fe0UEqEj8SUN8Oz+JEsvzyQmWHyLMtyoCG7sldi32A2Nz0Z/rpdevYNZqtiJOMaJoFW332OE2j1IEUNj8FWi2dBq1Jncl7iwuC73VotvP3x3jbraJUKWsW9yLyGV4NvAACk7U6mcm8wi7sneZaZwSzu3uVDPg1mgQ/WmzjWmzjWGwAAAKTmUq4M5miDa7kxmAPAD+5+4rj7iePuBwC8sN/Hsd/Hsd8jZRuyWcGWwezr1pGDCg4NZqeVr9VW27JDq1CrI+nSKtTqP/7BVM/ZTbRK9ZzdRKtUz9nsg7SiFa3aglZxJ3JawcBg9jb6AkaD9ZhQRgAA
+  </data>
+ </layer>
+ <layer name="Tile Layer 2" width="75" height="60">
+  <data encoding="base64" compression="gzip">
+   H4sIAAAAAAAAC+3XMQ0AAAgDQQTgXy8rYSAVcJfUwG+tAgAAAAAAAAAAtl7jp1VOKwAAwC/IaZXTCgAAAIBrAFjxiVJQRgAA
+  </data>
+ </layer>
+ <layer name="Tile Layer 3" width="75" height="60" visible="0">
+  <data encoding="base64" compression="gzip">
+   H4sIAAAAAAAAC+3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAAAADwa5ZHEYUEYAAA==
+  </data>
+ </layer>
+</map>

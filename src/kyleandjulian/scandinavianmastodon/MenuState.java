@@ -1,109 +1,113 @@
 package kyleandjulian.scandinavianmastodon;
 
-import java.awt.Toolkit;
-
 import org.newdawn.slick.*;
 import org.newdawn.slick.state.*;
+import org.newdawn.slick.state.transition.*;
 
 
 public class MenuState extends BasicGameState {
 	private Image titleBanner;
-	private Image playGame;
-	private Image playGameInverted;
-	private Image exitGame;
-	private Image exitGameInverted;		
-	private boolean playGameHover;
-	private boolean exitGameHover; 
-	private boolean playGameClicked;
-	private boolean exitGameClicked;
-	
-	// used for screen positioning of elements
-	private int titleBannerX;
-	private int titleBannerY;
-	private int playGameX;
-	private int playGameY;
-	private int exitGameX;
-	private int exitGameY;
+	private Image instructions;
+	private Button playButton;
+	private Button instructionsButton;
+	private Button exitButton;
+	private boolean playButtonClicked = false;
+	private boolean instructionsButtonClicked = false;
+	private boolean exitButtonClicked = false;
+	private boolean inInstructionsScreen = false;
+	private Music menuMusic;
+	private GameData gameData;
 	
 	
 	public MenuState(int state) {
 	}
 	
-	// initialize images and variables
+	
+	// initialize title banner, buttons, and music
 	public void init(GameContainer gc, StateBasedGame sbg) throws SlickException {
-		titleBanner = new Image("res/banner_title.png");
-		playGame = new Image("res/button_play.png");
-		exitGame = new Image("res/button_exit.png");
-		playGameInverted = new Image("res/button_play_inverted.png");
-		exitGameInverted = new Image("res/button_exit_inverted.png");		
-		playGameHover = false;
-		exitGameHover = false;
-		playGameClicked = false;
-		exitGameClicked = false;
-		
-		// calculate element positioning based on screen size
-		titleBannerX = (gc.getWidth() - titleBanner.getWidth())/2;  // center title banner
-		titleBannerY = gc.getHeight()/3 - (titleBanner.getHeight()/2);  // place title banner roughly 1/3 down the screen
-		playGameX = (gc.getWidth() - playGame.getWidth())/2;  // center playGame button
-		playGameY = (gc.getHeight()/3) * 2; // place the playGame button in the lower 1/3 of the screen
-		exitGameX = playGameX;  // stack exitGame button under playGame button
-		exitGameY = playGameX + playGame.getHeight() + 100;
+		titleBanner = new Image(GlobalConfig.BANNER_TITLE);
+		instructions = new Image(GlobalConfig.INSTRUCTIONS);
+		playButton = new Button(GlobalConfig.BUTTON_PLAY, GlobalConfig.BUTTON_PLAY_INVERTED, GlobalConfig.MENUSTATE_BUTTONPLAY_X, GlobalConfig.MENUSTATE_BUTTONPLAY_Y);
+		instructionsButton = new Button(GlobalConfig.BUTTON_INSTRUCTIONS, GlobalConfig.BUTTON_INSTRUCTIONS_INVERTED, GlobalConfig.MENUSTATE_BUTTONINSTRUCTIONS_X, GlobalConfig.MENUSTATE_BUTTONINSTRUCTIONS_Y);
+		exitButton = new Button(GlobalConfig.BUTTON_EXIT, GlobalConfig.BUTTON_EXIT_INVERTED, GlobalConfig.MENUSTATE_BUTTONEXIT_X, GlobalConfig.MENUSTATE_BUTTONEXIT_Y);					
+		menuMusic = new Music(GlobalConfig.SONG_MENU);	
+	}
+	
+	
+	// accept game data object
+	public void takeGameData(GameData gd) {
+		gameData = gd;
+	}	
+	
+	
+	// start the music
+	public void enter(GameContainer gc, StateBasedGame sbg) {
+		menuMusic.loop();
 	}
 
+	
 	// draw menu elements
 	public void render(GameContainer gc, StateBasedGame sbg, Graphics g) throws SlickException {
-		titleBanner.draw(titleBannerX, titleBannerY);
-		if (playGameHover == false) {
-			playGame.draw(playGameX, playGameY);
+		if (inInstructionsScreen == false) {
+			titleBanner.draw(GlobalConfig.MENUSTATE_TITLEBANNER_X, GlobalConfig.MENUSTATE_TITLEBANNER_Y);
+			playButton.render();
+			instructionsButton.render();
+			exitButton.render();		
 		} else {
-			playGameInverted.draw(playGameX, playGameY);
-		}
-		if (exitGameHover == false) {
-			exitGame.draw(exitGameX, exitGameY);
-		} else {
-			exitGameInverted.draw(exitGameX, exitGameY);
+			instructions.draw(100,100);
 		}
 	}
 	
+	
 	// update state depending on button click flags
 	public void update(GameContainer gc, StateBasedGame sbg, int delta) throws SlickException {
-		if (playGameClicked == true) {
-			playGameClicked = false;
-			sbg.enterState(1);
-		} else if (exitGameClicked == true) {
+		if (playButtonClicked == true) {
+			playButtonClicked = false;
+			menuMusic.stop();
+			PlayState ps = (PlayState)sbg.getState(GlobalConfig.PLAY_STATE);
+			ps.takeGameData(gameData);	
+			sbg.enterState(GlobalConfig.PLAY_STATE, new FadeOutTransition(GlobalConfig.OUT_TRANSITION_COLOR, GlobalConfig.OUT_TRANSITION_DURATION), new FadeInTransition(GlobalConfig.IN_TRANSITION_COLOR, GlobalConfig.IN_TRANSITION_DURATION));
+		} else if (instructionsButtonClicked == true) {
+			instructionsButtonClicked = false;
+			inInstructionsScreen = true;
+		} else if (exitButtonClicked == true) {
+			exitButtonClicked = false;
+			menuMusic.stop();
 			System.exit(0);
 		}
 	}
 	
+	
 	// handle mouse movement input
 	public void mouseMoved(int oldx, int oldy, int newx, int newy) {
-		// invert playGame image on hover
-		if (newx >= playGameX && newx <= playGameX + playGame.getWidth() && newy >= playGameY && newy <= playGameY + playGame.getHeight()) {
-			playGameHover = true;
-		} else {
-			playGameHover = false;
+		if (inInstructionsScreen == false) {
+			playButton.checkMouseHover(newx, newy);
+			instructionsButton.checkMouseHover(newx, newy);
+			exitButton.checkMouseHover(newx, newy);
 		}
-		
-		// invert exitGame image on hover
-		if (newx >= exitGameX && newx <= exitGameX + exitGame.getWidth() && newy >= exitGameY && newy <= exitGameY + exitGame.getWidth()) {
-			exitGameHover = true;
-		} else {
-			exitGameHover = false;
-		}		
 	}
+		
+	
 	
 	// handle mouse click input
 	public void mousePressed(int button, int x, int y) {
-		if (button == 0 && x >= playGameX && x <= playGameX + playGame.getWidth() && y >= playGameY && y <= playGameY + playGame.getHeight()) {
-			playGameClicked = true;
-		} 
-		
-		if (button == 0 && x >= exitGameX && x <= exitGameX + exitGame.getWidth() && y >= exitGameY && y <= exitGameY + exitGame.getHeight()) {
-			exitGameClicked = true;
-		} 		
-		
-		System.out.println();
+		if (inInstructionsScreen == false) {
+			if (playButton.isClicked(x, y) == true) {
+				playButtonClicked = true;
+			}
+			
+			if (instructionsButton.isClicked(x, y) == true) {
+				instructionsButtonClicked = true;
+			}		
+			
+			if (exitButton.isClicked(x, y) == true) {
+				exitButtonClicked = true;
+			}		
+		} else {
+			inInstructionsScreen = false;
+		}
 	}
+
 	
 	public int getID() {
 		return GlobalConfig.MENU_STATE;

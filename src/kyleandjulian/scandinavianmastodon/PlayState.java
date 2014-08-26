@@ -2,162 +2,199 @@ package kyleandjulian.scandinavianmastodon;
 
 import org.newdawn.slick.*;
 import org.newdawn.slick.state.*;
-import org.newdawn.slick.tiled.TiledMap;
+import org.newdawn.slick.state.transition.*;
+
 
 public class PlayState extends BasicGameState{
-	private Image blackBlock;	
-	private Image menubar;
-	private TiledMapExtended map;
-	private float mapCurrentX;  // current top left corner of viewable part of tiledmap
-	private float mapCurrentY;
-	private float minimapFocusRectWidth;
-	private float minimapFocusRectHeight;
-	private float minimapScaleX;
-	private float minimapScaleY;
-	private float minimapFrameX;
-	private float minimapFrameY;
-	private int viewportWidth;
-	private int viewportHeight;
-	private int zoomState;
-	private float zoomScale;
+	private Image hudOverlay;	
+	private Menu menu;
+	private TiledMapExtended map;	
+	private GameData gameData;
+	private Music levelMusic;
+	private boolean shiftMapUp = false;
+	private boolean shiftMapDown = false;
+	private boolean shiftMapLeft = false;
+	private boolean shiftMapRight = false;
 	
 	
+	// constructor
 	public PlayState(int state){
 	}
 	
-	public void init(GameContainer gc, StateBasedGame sbg) throws SlickException {
-		blackBlock = new Image("res/black_block.png");		
-		menubar = new Image("res/menubar.png");
-		map = new TiledMapExtended("res/tiledmap_temp.tmx");
-		
-		// initialize viewport at center of map
-		mapCurrentX = map.initializeViewportX(gc.getWidth(), GlobalConfig.PLAYSTATE_BORDER * 3 + GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH);
-		mapCurrentY = map.initializeViewportY(gc.getHeight(), GlobalConfig.PLAYSTATE_BORDER * 2);
-		
-		// calculate minimap focus rectangle dimensions
-		minimapFocusRectWidth = map.getMinimapFocusRectWidth(gc.getWidth(), GlobalConfig.PLAYSTATE_BORDER * 3 + GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH, GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH);
-		minimapFocusRectHeight = map.getMinimapFocusRectHeight(gc.getHeight(), GlobalConfig.PLAYSTATE_BORDER * 2, GlobalConfig.PLAYSTATE_MINIMAP_HEIGHT);
 	
-		// calculate minimap scale
-		minimapScaleX = map.getMinimapScaleX();
-		minimapScaleY = map.getMinimapScaleY();
+	// initialize images
+	public void init(GameContainer gc, StateBasedGame sbg) throws SlickException {	
+		hudOverlay = new Image(GlobalConfig.HUD_OVERLAY);		
+		menu = new Menu(GlobalConfig.MENUBAR);
+		menu.addButton(GlobalConfig.MENU_BUTTON_1, 50, 100, 81);
+		menu.addButton(GlobalConfig.MENU_BUTTON_2, 50, 200, 19);		
+	}
+	
+	
+	// accept game data object
+	public void takeGameData(GameData gd) {
+		gameData = gd;
+	}
+	
+	
+	// initialize TiledMap and music on enter
+	public void enter(GameContainer gc, StateBasedGame sbg) throws SlickException {
+		map = new TiledMapExtended(GlobalConfig.LEVEL_MAP[gameData.getLevel() - 1], true, true);
+		map.centerViewArea();
 		
-		// calculate minimap coords
-		minimapFrameX = gc.getWidth() - GlobalConfig.PLAYSTATE_BORDER - GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH;
-		minimapFrameY = GlobalConfig.PLAYSTATE_BORDER;
-		
-		// calculate viewport size
-		viewportWidth = gc.getWidth() - GlobalConfig.PLAYSTATE_BORDER * 3 - GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH;
-		viewportHeight = gc.getHeight() - GlobalConfig.PLAYSTATE_BORDER * 2;
-		
-		// set zoom state
-		zoomState = 0;
-		zoomScale = 1;
+		levelMusic = new Music(GlobalConfig.LEVEL_MUSIC[gameData.getLevel() - 1]);
+		levelMusic.loop();
 	}
    
-	public void render(GameContainer gc, StateBasedGame sbg, Graphics g) throws SlickException {
-		// draw main map
-		g.scale(zoomScale, zoomScale);
-		map.render((int)mapCurrentX, (int)mapCurrentY);
-		g.resetTransform();
-		
-		// draw borders
-		blackBlock.draw(0, 0, GlobalConfig.PLAYSTATE_BORDER, gc.getHeight());
-		blackBlock.draw(0, 0, gc.getWidth(), GlobalConfig.PLAYSTATE_BORDER);
-		blackBlock.draw(0, gc.getHeight() - GlobalConfig.PLAYSTATE_BORDER, gc.getWidth(), GlobalConfig.PLAYSTATE_BORDER);
-		blackBlock.draw(gc.getWidth() - GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH - (GlobalConfig.PLAYSTATE_BORDER * 2), 0, GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH + (GlobalConfig.PLAYSTATE_BORDER * 2), gc.getHeight());
-		
-		// draw minimap
-		g.scale(minimapScaleX, minimapScaleY);
-		map.render((int)((1/minimapScaleX) * minimapFrameX), (int)((1/minimapScaleY) * minimapFrameY));
-		g.resetTransform();
-		g.drawRect(map.getMinimapFocusRectX(gc.getWidth(), mapCurrentX), map.getMinimapFocusRectY(gc.getHeight(), mapCurrentY), minimapFocusRectWidth, minimapFocusRectHeight);	
 	
-		// draw menu pane
-		menubar.draw(gc.getWidth() - GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH - GlobalConfig.PLAYSTATE_BORDER, GlobalConfig.PLAYSTATE_BORDER * 2 + GlobalConfig.PLAYSTATE_MINIMAP_HEIGHT, GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH, GlobalConfig.PLAYSTATE_MENU_HEIGHT);
+	// render screen elements
+	public void render(GameContainer gc, StateBasedGame sbg, Graphics g) throws SlickException {	
+		map.render(g);
+		menu.render(g);
+		hudOverlay.draw();	
 	}
    
+	
+	// update state
 	public void update(GameContainer gc, StateBasedGame sbg, int delta) throws SlickException {	
-		Input input = gc.getInput();
-		
-		if (input.isKeyDown(Input.KEY_RIGHT)) {
-			if (mapCurrentX - viewportWidth > -(map.getPixelWidth())) {
-				mapCurrentX = mapCurrentX - delta * 0.4f;
-			} else {
-				mapCurrentX = -(map.getPixelWidth()) + viewportWidth;
-			}
+		if (checkWinCondition() == true) {
+			levelMusic.stop();
+			InterlevelState is = (InterlevelState)sbg.getState(GlobalConfig.INTERLEVEL_STATE);
+			is.takeGameData(gameData);	
+			sbg.enterState(GlobalConfig.INTERLEVEL_STATE, new FadeOutTransition(GlobalConfig.OUT_TRANSITION_COLOR, GlobalConfig.OUT_TRANSITION_DURATION), new FadeInTransition(GlobalConfig.IN_TRANSITION_COLOR, GlobalConfig.IN_TRANSITION_DURATION));			
 		}
 		
-		if (input.isKeyDown(Input.KEY_LEFT)) {
-			if (mapCurrentX < 0) {
-				mapCurrentX = mapCurrentX + delta * 0.4f;
-			} else {
-				mapCurrentX = 0;
-			}
+		if (shiftMapUp == true) {
+			map.updateViewAreaYLoc(-GlobalConfig.MAP_SCROLL_SPEED);
 		}
-		
-		if (input.isKeyDown(Input.KEY_DOWN)) {
-			if (mapCurrentY - viewportHeight > -(map.getPixelHeight())) {
-				mapCurrentY = mapCurrentY - delta * 0.4f;
-			} else {
-				mapCurrentY = -(map.getPixelHeight()) + viewportHeight;
-			}
-		}	
-		
-		if (input.isKeyDown(Input.KEY_UP)) {
-			if (mapCurrentY < 0) {
-				mapCurrentY = mapCurrentY + delta * 0.4f;
-			} else {
-				mapCurrentY = 0;
-			}
-		}		
+		if (shiftMapDown == true) {
+			map.updateViewAreaYLoc(GlobalConfig.MAP_SCROLL_SPEED);			
+		}
+		if (shiftMapLeft == true) {
+			map.updateViewAreaXLoc(-GlobalConfig.MAP_SCROLL_SPEED);
+		}
+		if (shiftMapRight == true) {
+			map.updateViewAreaXLoc(GlobalConfig.MAP_SCROLL_SPEED);			
+		}			
 	}
 	
-	public void mousePressed(int button, int x, int y) {
-		// click on minimap, shift viewport
-		if (button == 0 && x >= minimapFrameX && x <= minimapFrameX + GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH && y >= minimapFrameY && y <= minimapFrameY + GlobalConfig.PLAYSTATE_MINIMAP_HEIGHT) {
-			float tempX = x - minimapFrameX - minimapFocusRectWidth/2;
-			mapCurrentX = -(tempX * ((float)map.getPixelWidth())/GlobalConfig.PLAYSTATE_RIGHTPANEL_WIDTH);
-			
-			float tempY = y - minimapFrameY - minimapFocusRectHeight/2;  // realign y and calculate mapCurrentY
-			mapCurrentY = -(tempY * ((float)map.getPixelHeight())/GlobalConfig.PLAYSTATE_MINIMAP_HEIGHT);
-			
-			// make sure the new focus view is in x boundaries
-			if (mapCurrentX > 0 ) {
-				mapCurrentX = 0;
-			} else if (mapCurrentX < -(map.getPixelWidth() - viewportWidth)) {
-				mapCurrentX = -(map.getPixelWidth() - viewportWidth);
-			}
-			
-			// make sure the new focus view is in y boundaries			
-			if (mapCurrentY > 0 ) {
-				mapCurrentY = 0;
-			} else if (mapCurrentY < -(map.getPixelHeight() - viewportHeight)) {
-				mapCurrentY = -(map.getPixelHeight() - viewportHeight);
-			}			
-		}	
-		
-		//click on main map, change tile
-		if (button== 0 && x > GlobalConfig.PLAYSTATE_BORDER && x <= GlobalConfig.PLAYSTATE_BORDER + viewportWidth && y > GlobalConfig.PLAYSTATE_BORDER && y <= GlobalConfig.PLAYSTATE_BORDER + viewportHeight) {
-			int newTileX = (int)(-(mapCurrentX) + x)/map.getTileWidth();
-			int newTileY = (int)(-(mapCurrentY) + y)/map.getTileHeight();
-			map.setTileId(newTileX, newTileY, 0, 79);
+	
+	// keyPressed event
+	public void keyPressed(int key, char c) {
+		switch(key) {
+			case Input.KEY_UP:
+				shiftMapUp = true;
+				break;
+			case Input.KEY_DOWN:
+				shiftMapDown = true;			
+				break;
+			case Input.KEY_LEFT:
+				shiftMapLeft = true;			
+				break;
+			case Input.KEY_RIGHT:
+				shiftMapRight = true;			
+				break;
+			default:
+				break;
+		}
+	}
+	
+	
+	// keyReleased event
+	public void keyReleased(int key, char c) {
+		switch(key) {
+			case Input.KEY_UP:
+				shiftMapUp = false;
+				break;
+			case Input.KEY_DOWN:
+				shiftMapDown = false;			
+				break;
+			case Input.KEY_LEFT:
+				shiftMapLeft = false;			
+				break;
+			case Input.KEY_RIGHT:
+				shiftMapRight = false;			
+				break;
+			default:
+				break;
 		}
 	}	
 	
-	public void mouseWheelMoved(int change) {
-		if (change < 0) {
-			if ( zoomState > -GlobalConfig.PLAYSTATE_MOUSE_ZOOMLIMIT) {
-				zoomState--;
-				zoomScale = zoomScale - GlobalConfig.PLAYSTATE_ZOOMSTEP;
-			}
-		} else if (change > 0) {
-			if ( zoomState < GlobalConfig.PLAYSTATE_MOUSE_ZOOMLIMIT) {
-				zoomState++;
-				zoomScale = zoomScale + GlobalConfig.PLAYSTATE_ZOOMSTEP;				
-			}			
+	
+	// mouseDragged event
+	public void mouseDragged(int oldx, int oldy, int newx, int newy) {
+		if (newx > oldx) {
+			shiftMapRight = true;
+		} else if (newx < oldx) {
+			shiftMapLeft = true;
+		}
+		if (newy > oldy) {
+			shiftMapDown = true;
+		} else if (newy < oldy) {
+			shiftMapUp = true;
 		}
 	}
+	
+	
+	// mouseReleased event
+	public void mouseReleased(int button, int x, int y) {
+		shiftMapUp = false;
+		shiftMapDown = false;
+		shiftMapLeft = false;
+		shiftMapRight = false;
+	}
+	
+	// mousePressed event
+	public void mousePressed(int button, int x, int y) {
+		if (x >= GlobalConfig.PLAYSTATE_VIEWPORT_X && x <= GlobalConfig.PLAYSTATE_VIEWPORT_X + GlobalConfig.PLAYSTATE_VIEWPORT_WIDTH && y >= GlobalConfig.PLAYSTATE_VIEWPORT_Y && y <= GlobalConfig.PLAYSTATE_VIEWPORT_Y + GlobalConfig.PLAYSTATE_VIEWPORT_HEIGHT) {
+			// click is in the main viewport
+			map.mainViewPortClicked(button, x, y, menu.getCurrentSelection());
+		} else if (x >= GlobalConfig.PLAYSTATE_MINIMAP_X && x <= GlobalConfig.PLAYSTATE_MINIMAP_X + GlobalConfig.PLAYSTATE_MINIMAP_WIDTH && y >= GlobalConfig.PLAYSTATE_MINIMAP_Y && y <= GlobalConfig.PLAYSTATE_MINIMAP_Y + GlobalConfig.PLAYSTATE_MINIMAP_HEIGHT) {
+			// click is in the minimap
+			if (button == 0) {
+				map.miniMapClicked(x, y);
+			}
+		} else if (x >= GlobalConfig.PLAYSTATE_MENUBAR_X && x <= GlobalConfig.PLAYSTATE_MENUBAR_X + GlobalConfig.PLAYSTATE_MENUBAR_WIDTH && y >= GlobalConfig.PLAYSTATE_MENUBAR_Y && y <= GlobalConfig.PLAYSTATE_MENUBAR_Y + GlobalConfig.PLAYSTATE_MENUBAR_HEIGHT) {
+			// click is in the menubar
+			if (button == 0) {
+				menu.clicked(x, y);
+			}
+		}
+	}
+	
+	
+	// mouseWheelMoved event
+	public void mouseWheelMoved(int change) {
+		if (change > 0) {
+			menu.scrollUp();
+		} else if (change < 0) {
+			menu.scrollDown();
+		}
+	}
+	
+	
+	// check victory condition
+	private boolean checkWinCondition() {
+		int differences = 0;
+		int tileValue;
+		
+		for (int x = 0; x < map.getWidth(); x++) {
+			for (int y = 0; y < map.getHeight(); y++) {
+				if (map.getTileId(x, y, 1) != 0) {					
+					if (map.getTileId(x, y, 2) == 0) {
+						differences++;
+					}
+				}
+			}
+		}
+		
+		if (differences == 0) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
 	
 	public int getID(){
 		return GlobalConfig.PLAY_STATE;
